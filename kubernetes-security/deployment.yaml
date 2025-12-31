@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: page-downloader
+  namespace: homework
+  labels:
+    app: homework-deploment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: homework-1
+  template:
+    metadata:
+      labels:
+        app: homework-1
+    spec:
+      serviceAccountName: monitoring-sa
+      volumes:
+        - name: otus-storage
+          persistentVolumeClaim:
+            claimName: otus-pvc
+        - name: config
+          configMap:
+            name: otus-config
+            items:
+              - key: "otus_user"
+                path: "otus_user"
+              - key: "otus_password"
+                path: "otus_password"
+
+      initContainers:
+        - name: download-page
+          image: busybox
+          command:
+            - sh
+            - -c
+            - |
+              wget -O /html/index.html https://receipts-app.com/de
+              mkdir -p /html/conf
+              cp -v /homework/conf/* /html/conf/
+              
+              # static metrics endpoint
+              cat > /html/metrics.html <<'EOF'
+              # HELP page_downloader_up Always 1
+              # TYPE page_downloader_up gauge
+              page_downloader_up 1
+              EOF
+          volumeMounts:
+            - name: otus-storage
+              mountPath: /html
+            - name: config
+              mountPath: /homework/conf
+              readOnly: true
+
+      containers:
+        - name: nginx
+          image: nginx
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "64Mi"
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          volumeMounts:
+            - name: otus-storage
+              mountPath: /usr/share/nginx/html
+            - name: config
+              mountPath: /homework/conf
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /index.html
+              port: 80
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
