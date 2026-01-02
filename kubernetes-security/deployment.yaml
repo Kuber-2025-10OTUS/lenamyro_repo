@@ -39,13 +39,6 @@ spec:
               wget -O /html/index.html https://receipts-app.com/de
               mkdir -p /html/conf
               cp -v /homework/conf/* /html/conf/
-              
-              # static metrics endpoint
-              cat > /html/metrics.html <<'EOF'
-              # HELP page_downloader_up Always 1
-              # TYPE page_downloader_up gauge
-              page_downloader_up 1
-              EOF
           volumeMounts:
             - name: otus-storage
               mountPath: /html
