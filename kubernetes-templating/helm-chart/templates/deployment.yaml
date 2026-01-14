@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ .Values.deployment.name }}"
+  namespace: "{{ .Values.namespace }}"
+  labels:
+    {{- toYaml .Values.deployment.labels | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: homework-1
+  template:
+    metadata:
+      labels:
+        app: homework-1
+    spec:
+      serviceAccountName: monitoring-sa
+      volumes:
+        - name: otus-storage
+          persistentVolumeClaim:
+            claimName: otus-pvc
+        - name: config
+          configMap:
+            name: otus-config
+            items:
+              - key: "otus_user"
+                path: "otus_user"
+              - key: "otus_password"
+                path: "otus_password"
+
+      initContainers:
+        - name: download-page
+          image: busybox
+          command:
+            - sh
+            - -c
+            - |
+              wget -O /html/index.html https://receipts-app.com/de
+              mkdir -p /html/conf
+              cp -v /homework/conf/* /html/conf/
+          volumeMounts:
+            - name: otus-storage
+              mountPath: /html
+            - name: config
+              mountPath: /homework/conf
+              readOnly: true
+
+      containers:
+        - name: "{{ .Values.containers.nginx.name }}"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          resources:
+            requests:
+              cpu: "{{ .Values.containers.nginx.resources.requests.cpu }}"
+              memory: "{{ .Values.containers.nginx.resources.requests.memory }}"
+            limits:
+              cpu: "{{ .Values.containers.nginx.resources.limits.cpu }}"
+              memory: "{{ .Values.containers.nginx.resources.limits.memory }}"
+          volumeMounts:
+            - name: otus-storage
+              mountPath: /usr/share/nginx/html
+            - name: config
+              mountPath: /homework/conf
+              readOnly: true
+          
+          {{- if .Values.probes.liveness.enabled }}
+          readinessProbe:
+            httpGet:
+              path: /index.html
+              port: 80
+          {{- end }}
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1

@@ -1,0 +1,35 @@
+releases:
+  - name: kafka-prod
+    namespace: prod
+    
+image:
+  repository: docker.io/bitnami/kafka
+  tag: 3.5.2
+  pullPolicy: IfNotPresent
+
+broker:
+  replicaCount: 5
+  
+listeners:
+  client:
+    protocol: SASL_PLAINTEXT
+  controller:
+    protocol: SASL_PLAINTEXT
+    
+auth:
+  sasl:
+    mechanisms:
+      - scram-sha-256
+    interBrokerMechanism: scrap-sha-256
+  enabled: true
+  
+  
+controller:
+  user: controller
+  password: pass
+  
+client:
+  users:
+    - user1
+  passwords:
+    -pass1
