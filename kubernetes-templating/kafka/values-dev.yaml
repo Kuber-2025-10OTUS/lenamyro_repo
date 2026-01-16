@@ -1,0 +1,17 @@
+releases:
+  - name: kafka-dev
+    namespace: dev
+    
+image:
+  repository: docker.io/bitnami/kafka
+  tag: latest
+  pullPolicy: IfNotPresent
+
+broker:
+  replicaCount: 1
+  
+listeners:
+  client:
+    protocol: PLAINTEXT
+  controller:
+    protocol: PLAINTEXT
