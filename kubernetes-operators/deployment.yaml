@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-otus
+  namespace: homework
+  labels:
+    app: homework-Deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: homework-1
+  template:
+    metadata:
+      labels:
+        app: homework-1
+    spec:
+      serviceAccountName: admin-mysql-sa
+      containers:
+        - name: mysql-otus
+          image: roflmaoinmysoul/mysql-operator:1.0.0
+          imagePullPolicy: IfNotPresent

@@ -1,0 +1,10 @@
+apiVersion: otus.homework/v1
+kind: MySQL
+metadata:
+  name: my-mysql # это уникальное имя объекта внутри namespace
+  namespace: homework
+spec:
+  image: "mysql:8.1"
+  database: "otus_db"
+  password: "otus_pass"
+  storage_size: "2Gi"
