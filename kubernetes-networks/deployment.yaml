@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: page-downloader
+  namespace: homework
+  labels:
+    app: homework-deploment  
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: homework-1      
+  template:
+    metadata:
+      labels:
+        app: homework-1
+    spec:
+      volumes:
+        - name: html
+          emptyDir: {}
+      initContainers:
+        - name: download-page
+          image: busybox
+          command:
+            [
+              "wget",
+              "-O",
+              "/html/index.html",
+              "https://receipts-app.com/de"
+            ]
+          volumeMounts:
+            - name: html
+              mountPath: /html
+      containers:
+        - name: nginx
+          image: nginx
+          volumeMounts:
+            - name: html
+              mountPath: /usr/share/nginx/html
+          readinessProbe:
+           httpGet:
+             path: /index.html
+             port: 80
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
